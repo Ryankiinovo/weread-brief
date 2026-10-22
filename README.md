@@ -172,7 +172,7 @@ npm run check   # 隐私与产物检查
 
 线上地址：<https://ryankiinovo.github.io/weread-brief/>
 
-页面已经在本地构建好并提交到 `site/`。部署走 `gh-pages` 分支：脚本在临时 worktree 里把 `site/` 提交到该分支，GitHub Pages 直接从分支提供文件，不依赖 CI runner。
+页面已经在本地构建好并提交到 `site/`。部署走 `gh-pages` 分支：脚本在临时目录里把 `site/` 提交到该分支，GitHub Pages 直接从分支提供文件，不依赖 CI runner。
 
 1. 运行 `./scripts/deploy-pages.sh`（会先构建、做隐私检查，再推送 `gh-pages`）。
 2. 仓库 Settings → Pages → Source 选择 **Deploy from a branch**，分支 `gh-pages`、目录 `/`。
