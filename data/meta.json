@@ -1,11 +1,12 @@
 {
-  "generatedAt": "2026-10-22T15:17:30.633Z",
+  "generatedAt": "2026-10-22T16:08:31.424Z",
   "source": "微信读书 → Obsidian（obsidian-weread-plugin 同步）",
   "statsAsOf": "2026-09-15",
   "books": 9,
-  "highlights": 724,
+  "highlights": 720,
+  "sourceHighlights": 724,
+  "excerpts": 720,
   "thoughtsLocal": 60,
   "thoughtsPublished": 60,
-  "readingMinutesLocal": 2088,
-  "curated": false
+  "readingMinutesLocal": 2088
 }

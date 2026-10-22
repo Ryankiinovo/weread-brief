@@ -15,13 +15,13 @@
 ## 站点包含什么
 
 - **总览**：官方累计阅读时长、读过的书、读完的书、笔记数；2021—2026 历年柱状图与当年逐月分布。
-- **书架**：同步到本地的书，含作者、进度、阅读时长、划线与想法数量、阅读状态。
-- **批注**：60 条本地原创想法全部公开，可按书筛选；每条附上对应的划线原文片段，原文只作对照。
-- **方法**：同步 → 解析 → 生成 → 校验的流水线说明，以及隐私与口径决策。
+- **书架**：同步到本地的书，含作者、进度、阅读时长、摘录与批注数量、阅读状态。
+- **我的摘录**：720 条摘录全部公开，其中 60 条带原创批注。默认按时间线（年月倒序）浏览，可切到「按书」按书架与章节查看；每页 20 条，支持按书、月份、章节筛选，视图状态写进 URL。
+- **方法**：同步 → 解析 → 生成 → 校验的流水线说明，以及隐私、去重与口径决策。
 
 页面是纯静态的：`site/index.html` + 手写的 `site/assets/style.css` 与 `site/assets/app.js`，没有构建期前端依赖，也没有外部字体或统计脚本。
 
-![批注区预览](docs/preview-notes.png)
+![摘录区预览](docs/preview-notes.png)
 
 ## 快速开始
 
@@ -44,7 +44,8 @@ python3 -m http.server 8000 --directory site
 
 - `data/meta.json`：生成时间、来源、各项计数。
 - `data/books.json`：书目与章节统计。
-- `data/thoughts.json`：公开想法与对应的划线原文片段。
+- `data/excerpts.json`：公开摘录（原文片段、书籍、章节、日期）与对应批注。
+- `data/thoughts.json`：只含有原创批注的子集，便于单独消费。
 - `data/stats.json`：官方 lifetime、历年与逐月。
 - `site/index.html`：静态页面。
 
@@ -92,7 +93,9 @@ readingStatus: "2"
 - 读取 frontmatter 中的书目元数据与阅读状态。
 - 以 `> 📌` 开头识别一个划线块，向下读取 `💭`（想法）与 `⏱`（时间），遇到空行、标题或下一个划线块即结束。
 - `### 划线评论` 不是章节，会被跳过，章节沿用上级标题。
-- 想法按文本去重，生成稳定 id；引用原文随批注保留，同时记录 SHA-1 前 12 位与字符数用于校验。
+- 摘录原文按空白规范化后去重：724 个划线块收敛为 720 条，重复的 4 条保留第一次出现的位置。
+- 想法按文本去重，生成稳定 id；每条想法挂到对应摘录，独立想法（只有 `# 读书笔记`、没有划线块）也能单独成条。
+- Quote hash 记录 SHA-1 前 12 位与字符数，用于校验解析完整性。
 - 阅读状态：`readingStatus == 4` 或进度 100% 视为读完；180 天内有阅读记录视为在读；其余为搁置。
 
 ### 2. 阅读统计
@@ -119,13 +122,13 @@ WEREAD_DIR=example/notes node scripts/build.mjs --no-site
 
 公开三类数据：
 
-1. **原创想法**：你在微信读书里写下的 60 条批注，全部公开。
-2. **对应原文**：每条批注对应的划线片段，只作上下文对照，不提供整书内容。
-3. **元数据与统计**：书名、作者、进度、时长、划线数、想法数、阅读日期、章节名。
+1. **摘录**：从本地笔记解析出的 720 条书籍原文片段，每条都附书名、章节与日期；这是「我的摘录」的主体。
+2. **原创批注**：60 条自己写下的想法，挂在对应摘录下；没有批注的摘录只显示原文。
+3. **元数据与统计**：书名、作者、进度、时长、源划线数、去重后摘录数、批注数、阅读日期、章节名。
 
-不公开：整书内容、私人笔记全文、登录 Cookie、带个人信息的路径。
+不公开：整书内容、微信读书账号信息、同步插件的 Cookie、带个人信息的本机路径。页面按「短片段对照」组织，不拼接整章，也不提供全文检索。
 
-构建脚本支持用 `config/curation.json` 的 id 白名单收窄范围；本仓库没有启用，因此新增想法会自动进入页面。
+构建脚本支持用 `config/curation.json` 的 id 白名单收窄范围；本仓库没有启用，因此新增摘录与批注会自动进入页面。若版权方提出异议，可删除对应条目或用白名单收窄。
 
 ### 隐私检查
 
@@ -133,26 +136,26 @@ WEREAD_DIR=example/notes node scripts/build.mjs --no-site
 npm run check
 ```
 
-检查项包括：手机号、邮箱、身份证号、微信读书 Cookie 关键词、本机绝对路径、页面中的划线标记、第三方脚本引用，以及每条想法是否带非空原文、`quoteLength` 是否与实际一致。
+检查项包括：手机号、邮箱、身份证号、微信读书 Cookie 关键词、本机绝对路径、第三方脚本引用；同时校验每条摘录原文非空且不超过 500 字、书籍与章节非空、quoteHash 与 quoteLength 一致，以及 `meta` 中的摘录数、批注数与 JSON 实际条数一致。
 
 解析器本身不读取 Obsidian 插件的 `data.json`；那份文件里存有微信读书登录凭据，任何时候都不应提交或粘贴到公开场合。
 
 ## 口径说明
 
 - **官方 lifetime** 来自微信读书统计页，截至统计文件中的 `updated` 日期（本仓库为 2026-09-15）：累计 46 小时 43 分、读过 32 本、读完 16 本、笔记 501 条。
-- **本地同步覆盖** 只统计同步到 Obsidian 的 9 本书：724 条划线、60 条想法、34 小时 48 分。
-- 两个口径不同，页面与文档都不做相加；501 条官方笔记也不等于 60 条本地想法（后者去重且只含写下的批注）。
+- **本地同步覆盖** 只统计同步到 Obsidian 的 9 本书：源文件 724 个划线块，按原文去重后为 720 条摘录、60 条批注、34 小时 48 分。
+- 两个口径不同，页面与文档都不做相加；501 条官方笔记也不等于 60 条本地批注（后者去重且只含写下的想法）。
 
 ## 项目结构
 
 ```text
 .
 ├── scripts/
-│   ├── lib.mjs          # 解析、清洗、统计（无依赖）
+│   ├── lib.mjs          # 解析、去重、统计（无依赖）
 │   ├── build.mjs        # 读取笔记 → 输出 data/ 与 site/
 │   ├── render.mjs       # 生成静态 HTML
 │   ├── check.mjs        # 隐私与数据结构检查
-│   └── deploy-pages.sh  # 构建并发布到 gh-pages 分支
+│   └── deploy-pages.sh  # 构建并同步 docs/ 后推送 main
 ├── tests/parse.test.mjs # 解析边界与统计口径测试
 ├── data/                # 构建产物（JSON）
 ├── site/                # 静态页面（可直接部署）
@@ -167,7 +170,7 @@ npm test        # node --test
 npm run check   # 隐私与产物检查
 ```
 
-测试覆盖：frontmatter 与章节归属、标题紧贴上一块、连续划线块、想法去重、原文随批注保留、阅读状态判定、统计解析、分钟格式化。
+测试覆盖：frontmatter 与章节归属、标题紧贴上一块、连续划线块、想法去重、原文随批注保留、只有批注没有划线的条目、阅读状态判定、统计解析、分钟格式化。
 
 ## 部署
 
@@ -185,17 +188,19 @@ npm run check   # 隐私与产物检查
 
 - 解析规则绑定 obsidian-weread-plugin 的输出格式；插件大改版时可能需要同步调整。
 - 「在读 / 搁置」用 180 天启发式判断，不是微信读书的官方状态。
-- 公开范围默认全量；如需收窄，可添加 `config/curation.json` 白名单，否则新增想法会直接公开。
+- 公开范围默认全量（720 条摘录 + 60 条批注）；如需收窄，可添加 `config/curation.json` 白名单，否则新增内容会直接公开。
+- 摘录为书籍原文片段，版权归原作者与出版方；本站只做个人阅读记录的短对照，不提供整书或整章内容。
 - 字体依赖系统：macOS 使用宋体/PingFang，其他系统会回退到 Noto 或 Georgia，排版略有差异。
-- 站点是静态产物，没有搜索与分页；想法数量增多时需要改成分页或多页。
+- 站点是静态产物，没有全文搜索；摘录分页在前端完成，每页 20 条。
 
 ## English
 
 A small, reproducible pipeline that turns WeRead highlights, thoughts and reading stats synced into Obsidian into a static reading archive.
 
 - Zero dependencies; Node.js 18+.
-- Parses Markdown, deduplicates thoughts, and keeps the highlighted excerpt beside each thought as context.
-- Publishes every original thought by default; an optional id whitelist can narrow the set, and a privacy check guards the output.
+- Parses Markdown, deduplicates excerpts (724 → 720) and thoughts, and keeps each highlighted excerpt beside its note.
+- Publishes all 720 excerpts and 60 original notes by default; an optional id whitelist can narrow the set, and a privacy check guards the output.
+- Browsable as a reverse-chronological timeline or by book and chapter, 20 excerpts per page.
 - Visual design is editorial: warm paper, serif display type, restrained accent, responsive layout.
 
 ```bash

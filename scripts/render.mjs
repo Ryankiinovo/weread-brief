@@ -89,29 +89,61 @@ function bookCards(books) {
       '<p class="book-author">' + esc(book.author) + '</p>' +
       '<div class="book-progress" aria-label="阅读进度 ' + progress + '%"><span style="width:' + progress + '%"></span></div>' +
       '<div class="book-meta"><span>' + progress + '%</span><span>' + formatHM(book.readingMinutes) + '</span></div>' +
-      '<div class="book-counts"><span><b>' + (book.highlights || 0) + '</b> 条划线</span>' +
-      '<span><b>' + (book.thoughts || 0) + '</b> 条想法</span></div></article>';
+      '<div class="book-counts"><span><b>' + (book.highlights || 0) + '</b> 条摘录</span>' +
+      '<span><b>' + (book.thoughts || 0) + '</b> 条批注</span></div></article>';
   }).join("");
 }
 
-function noteCards(thoughts) {
-  return thoughts.map(function (thought) {
-    const quote = thought.quote
-      ? '<blockquote class="note-quote"><span class="note-label">原文</span>' + esc(thought.quote) + '</blockquote>'
+function monthLabel(value) {
+  const match = /^(\d{4})-(\d{2})$/.exec(value || "");
+  return match ? match[1] + " 年 " + Number(match[2]) + " 月" : "未标日期";
+}
+
+function excerptRows(excerpts, books) {
+  const bookIndex = new Map(books.map(function (book, index) { return [book.title, index]; }));
+  const chapterIndex = new Map();
+  books.forEach(function (book, index) {
+    (book.chapters || []).forEach(function (chapter, chapterNo) {
+      chapterIndex.set(book.title + "\u0000" + chapter.title, chapterNo);
+    });
+  });
+  return excerpts.map(function (item) {
+    const bi = bookIndex.has(item.book) ? bookIndex.get(item.book) : books.length;
+    const key = item.book + "\u0000" + item.chapter;
+    return {
+      item: item,
+      bookIndex: bi,
+      chapterIndex: chapterIndex.has(key) ? chapterIndex.get(key) : 9999,
+      month: String(item.date || "").slice(0, 7)
+    };
+  }).sort(function (a, b) {
+    if ((b.item.date || "") !== (a.item.date || "")) return (b.item.date || "").localeCompare(a.item.date || "");
+    if (a.bookIndex !== b.bookIndex) return a.bookIndex - b.bookIndex;
+    return a.chapterIndex - b.chapterIndex;
+  });
+}
+
+function excerptCards(rows) {
+  return rows.map(function (row, index) {
+    const item = row.item;
+    const note = item.note
+      ? '<p class="excerpt-note"><span class="excerpt-label">批注</span>' + esc(item.note) + '</p>'
       : '';
-    return '<article class="note" data-book="' + esc(thought.book) + '">' +
-      quote +
-      '<p class="note-text"><span class="note-label">批注</span>' + esc(thought.text) + '</p>' +
-      '<footer class="note-foot"><span class="note-book">' + esc(thought.book) + '</span>' +
-      '<span class="note-chapter">' + esc(thought.chapter) + '</span>' +
-      '<time datetime="' + esc(thought.date) + '">' + dotDate(thought.date) + '</time></footer></article>';
+    return '<article class="excerpt-card" data-book="' + esc(item.book) + '" data-book-index="' + row.bookIndex +
+      '" data-chapter="' + esc(item.chapter) + '" data-chapter-index="' + row.chapterIndex +
+      '" data-month="' + esc(row.month) + '" data-date="' + esc(item.date) + '"' + (index >= 20 ? ' hidden' : '') + '>' +
+      '<blockquote class="excerpt-quote"><span class="excerpt-label">原文</span>' + esc(item.text) + '</blockquote>' +
+      note +
+      '<footer class="excerpt-foot"><span class="excerpt-book">' + esc(item.book) + '</span>' +
+      '<span class="excerpt-chapter">' + esc(item.chapter) + '</span>' +
+      '<time datetime="' + esc(item.date) + '">' + dotDate(item.date) + '</time></footer></article>';
   }).join("");
 }
 
-function filterChips(thoughts) {
+function filterChips(excerpts) {
   const counts = new Map();
-  thoughts.forEach(function (thought) {
-    counts.set(thought.book, (counts.get(thought.book) || 0) + 1);
+  excerpts.forEach(function (item) {
+    counts.set(item.book, (counts.get(item.book) || 0) + 1);
   });
   const order = Array.from(counts.keys()).sort(function (a, b) {
     return counts.get(b) - counts.get(a);
@@ -121,26 +153,37 @@ function filterChips(thoughts) {
       esc(book) + ' <span>' + counts.get(book) + '</span></button>';
   }).join("");
   return '<button class="chip is-active" type="button" data-filter="all" aria-pressed="true">全部 <span>' +
-    thoughts.length + '</span></button>' + chips;
+    excerpts.length + '</span></button>' + chips;
+}
+
+function monthOptions(rows) {
+  const counts = new Map();
+  rows.forEach(function (row) { counts.set(row.month, (counts.get(row.month) || 0) + 1); });
+  const options = Array.from(counts.keys()).sort().reverse().map(function (month) {
+    return '<option value="' + esc(month) + '">' + esc(monthLabel(month)) + ' · ' + counts.get(month) + ' 条</option>';
+  }).join("");
+  return '<option value="all">全部时间</option>' + options;
 }
 
 export function renderSite(payload) {
   const meta = payload.meta || {};
   const lifetime = payload.stats.lifetime || {};
   const books = payload.books || [];
-  const thoughts = payload.thoughts || [];
+  const excerpts = payload.excerpts || [];
+  const rows = excerptRows(excerpts, books);
+  const thoughtCount = excerpts.filter(function (item) { return item.note; }).length;
   const synced = books.length;
-  const highlights = meta.highlights || 0;
-  const localThoughts = meta.thoughtsLocal || 0;
+  const highlights = meta.highlights || excerpts.length;
+  const sourceHighlights = meta.sourceHighlights || highlights;
+  const localThoughts = meta.thoughtsLocal || thoughtCount;
   const localMinutes = meta.readingMinutesLocal || 0;
   const yearMinutes = (payload.stats.years || []).reduce(function (sum, row) { return sum + row.minutes; }, 0);
   const generated = String(meta.generatedAt || "").slice(0, 10);
   const finishedCount = books.filter(function (b) { return b.status === "finished"; }).length;
   const readingCount = books.filter(function (b) { return b.status === "reading"; }).length;
-
-  const notesLede = thoughts.length === localThoughts
-    ? localThoughts + ' 条本地想法全部公开。'
-    : '从 ' + localThoughts + ' 条本地想法里挑出 ' + thoughts.length + ' 条公开。';
+  const totalPages = Math.max(1, Math.ceil(excerpts.length / 20));
+  const excerptLede = excerpts.length + ' 条摘录全部公开，其中 ' + thoughtCount + ' 条带批注；源文件 ' +
+    sourceHighlights + ' 个划线块，按原文去重后为 ' + excerpts.length + ' 条。';
   const lines = [
     '<!doctype html>',
     '<html lang="zh-CN">',
@@ -148,11 +191,11 @@ export function renderSite(payload) {
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     '<title>阅读档案 · Ryankiin</title>',
-    '<meta name="description" content="把微信读书里的划线、想法与阅读统计整理成一份可检索的个人阅读档案：' + synced + ' 本书、' + highlights + ' 条划线、' + localThoughts + ' 条想法。">',
+    '<meta name="description" content="把微信读书里的划线、批注与阅读统计整理成一份可检索的个人阅读档案：' + synced + ' 本书、' + excerpts.length + ' 条摘录、' + thoughtCount + ' 条批注。">',
     '<meta name="theme-color" content="#f6f1e7">',
     '<meta property="og:type" content="website">',
     '<meta property="og:title" content="阅读档案 · Ryankiin">',
-    '<meta property="og:description" content="' + synced + ' 本书、' + highlights + ' 条划线、' + localThoughts + ' 条想法：一份可复现的个人阅读档案。">',
+    '<meta property="og:description" content="' + synced + ' 本书、' + excerpts.length + ' 条摘录、' + thoughtCount + ' 条批注：一份可复现的个人阅读档案。">',
     '<link rel="stylesheet" href="./assets/style.css">',
     '</head>',
     '<body>',
@@ -162,7 +205,7 @@ export function renderSite(payload) {
     '  <nav class="nav" aria-label="页面导航">',
     '    <a href="#overview">总览</a>',
     '    <a href="#shelf">书架</a>',
-    '    <a href="#notes">批注</a>',
+    '    <a href="#excerpts">摘录</a>',
     '    <a href="#method">方法</a>',
     '  </nav>',
     '</header>',
@@ -173,7 +216,7 @@ export function renderSite(payload) {
     '        <p class="eyebrow">个人阅读档案 · Ryankiin · 2020—2026</p>',
     '        <h1>把读过的书，<br><em>整理成可检索的档案。</em></h1>',
     '        <p class="lede">把微信读书里的划线、批注和阅读时长导出、解析，做成一份能反复回看的结构化记录。原文与自己的想法并置，方便对照。</p>',
-    '        <p class="hero-note">已同步 ' + synced + ' 本书 · ' + highlights + ' 条划线 · ' + localThoughts + ' 条想法</p>',
+    '        <p class="hero-note">已同步 ' + synced + ' 本书 · ' + excerpts.length + ' 条摘录 · ' + thoughtCount + ' 条批注</p>',
     '      </div>',
     '      <aside class="hero-aside" aria-label="档案说明">',
     '        <p class="aside-kicker">DATA, NOT DECORATION</p>',
@@ -200,8 +243,8 @@ export function renderSite(payload) {
     '          <p class="coverage-kicker">本地同步覆盖</p>',
     '          <dl class="coverage-grid">',
     '            <div><dt>已同步</dt><dd>' + synced + '<span> 本</span></dd></div>',
-    '            <div><dt>划线</dt><dd>' + highlights + '<span> 条</span></dd></div>',
-    '            <div><dt>想法</dt><dd>' + localThoughts + '<span> 条</span></dd></div>',
+    '            <div><dt>摘录</dt><dd>' + excerpts.length + '<span> 条</span></dd></div>',
+    '            <div><dt>批注</dt><dd>' + thoughtCount + '<span> 条</span></dd></div>',
     '            <div><dt>阅读时长</dt><dd>' + formatHM(localMinutes) + '</dd></div>',
     '          </dl>',
     '          <p class="coverage-note">官方统计是总量，这里只覆盖同步到本地的 ' + synced + ' 本书，两者口径不同，不做相加。</p>',
@@ -226,18 +269,31 @@ export function renderSite(payload) {
     '    </div>',
     '  </section>',
     '',
-    '  <section class="section" id="notes">',
+    '  <section class="section" id="excerpts">',
     '    <div class="wrap">',
     '      <div class="section-head">',
     '        <p class="index">03</p>',
-    '        <h2>我写下的批注</h2>',
-        '<p class="section-lede">' + notesLede + '每条都附上对应的划线原文，原文只作对照，版权归原作者。</p>',
+    '        <h2>我的摘录</h2>',
+    '        <p class="section-lede">' + excerptLede + '原文只作对照，版权归原作者。</p>',
     '      </div>',
-    '      <div class="filters" role="group" aria-label="按书筛选批注">',
-    '        ' + filterChips(thoughts),
+    '      <div class="excerpt-toolbar">',
+    '        <div class="view-switch" role="group" aria-label="切换摘录视图">',
+    '          <button class="view-btn is-active" type="button" data-view="time" aria-pressed="true">时间线</button>',
+    '          <button class="view-btn" type="button" data-view="book" aria-pressed="false">按书</button>',
+    '        </div>',
+    '        <div class="excerpt-selects">',
+    '          <label class="excerpt-field">月份<select class="excerpt-select" id="excerptMonth">' + monthOptions(rows) + '</select></label>',
+    '          <label class="excerpt-field">章节<select class="excerpt-select" id="excerptChapter" disabled><option value="all">全部章节</option></select></label>',
+    '        </div>',
+    '        <p class="excerpt-count" id="excerptCount">共 ' + excerpts.length + ' 条摘录 · 第 1 / ' + totalPages + ' 页</p>',
     '      </div>',
-    '      <div class="note-grid" id="note-grid">' + noteCards(thoughts) + '</div>',
-    '      <p class="filter-note" id="filter-note" aria-live="polite">显示全部 ' + thoughts.length + ' 条</p>',
+    '      <div class="filters" id="excerptFilters" role="group" aria-label="按书筛选摘录">',
+    '        ' + filterChips(excerpts),
+    '      </div>',
+    '      <div class="excerpt-grid" id="excerptGrid">' + excerptCards(rows) + '</div>',
+    '      <p class="excerpt-empty" id="excerptEmpty" hidden>没有符合条件的摘录。</p>',
+    '      <nav class="excerpt-pager" id="excerptPager" aria-label="摘录分页"></nav>',
+    '      <noscript><p class="excerpt-noscript">本页默认展示前 20 条摘录；启用 JavaScript 后可按时间或书籍章节浏览全部 ' + excerpts.length + ' 条。</p></noscript>',
     '    </div>',
     '  </section>',
     '',
@@ -263,13 +319,13 @@ export function renderSite(payload) {
     '          <ul class="facts">',
     '            <li><b>0</b><span>运行时依赖</span></li>',
     '            <li><b>2</b><span>个构建脚本</span></li>',
-    '            <li><b>' + thoughts.length + '</b><span>段原文对照</span></li>',
+    '            <li><b>' + excerpts.length + '</b><span>条摘录</span></li>',
     '          </ul>',
     '        </div>',
     '      </div>',
     '      <div class="principles">',
-    '        <div><h3>原文只作对照</h3><p>划线版权归原作者；页面只展示与批注对应的短片段，不提供整书内容，也不做原文检索。</p></div>',
-    '        <div><h3>口径写清楚</h3><p>官方统计与本地同步覆盖分开标注，不把 501 条官方笔记等同于这里的 ' + localThoughts + ' 条想法。</p></div>',
+    '        <div><h3>原文只作对照</h3><p>摘录版权归原作者；页面展示个人阅读记录里的短片段，不拼整章、不提供整书内容，也不做原文检索。</p></div>',
+    '        <div><h3>口径写清楚</h3><p>官方统计与本地同步覆盖分开标注，不把 501 条官方笔记等同于这里的 ' + thoughtCount + ' 条批注。</p></div>',
     '        <div><h3>可复核</h3><p>每个数字都能由仓库里的脚本和原始 Markdown 重新算出来，页面只是产物。</p></div>',
     '      </div>',
     '    </div>',
@@ -280,7 +336,7 @@ export function renderSite(payload) {
     '    <div><p class="foot-title">阅读档案</p><p class="foot-text">数据：微信读书官方统计（截至 ' + esc(meta.statsAsOf || "—") + '）+ 本地同步笔记。页面生成于 ' + generated + '。</p></div>',
     '    <div class="foot-links"><a href="' + REPO + '">GitHub 仓库</a><a href="' + REPO + '/blob/main/docs/case-study.md">制作说明</a><a href="#top">回到顶部</a></div>',
     '  </div>',
-    '  <div class="wrap foot-fine"><p>原创批注 + 对应划线片段；书籍原文版权归原作者。本站无追踪、无第三方脚本。</p></div>',
+    '  <div class="wrap foot-fine"><p>原创批注 + 个人摘录片段；书籍原文版权归原作者。本站无追踪、无第三方脚本。</p></div>',
     '</footer>',
     '<script src="./assets/app.js"></script>',
     '</body>',

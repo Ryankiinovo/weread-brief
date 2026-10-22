@@ -92,6 +92,100 @@ function statusOf(frontmatter) {
   return days <= 180 ? "reading" : "paused";
 }
 
+function normalizeQuote(value) {
+  return String(value || "")
+    .replace(/\u200b/g, "")
+    .replace(/[“”"'‘’]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function buildExcerpts(blocks, bookId, title, author) {
+  const highlights = blocks.filter((b) => b.kind === "highlight");
+  const reviews = blocks.filter((b) => b.kind === "review" && b.thought.trim());
+  const reviewByQuote = new Map();
+  for (const review of reviews) {
+    const key = normalizeQuote(review.quote);
+    if (key && !reviewByQuote.has(key)) reviewByQuote.set(key, review);
+  }
+
+  const usedNotes = new Set();
+  const seenQuotes = new Set();
+  const excerpts = [];
+  for (const block of highlights) {
+    const quoteKey = normalizeQuote(block.quote);
+    if (!quoteKey || seenQuotes.has(quoteKey)) continue;
+    seenQuotes.add(quoteKey);
+
+    let note = (block.thought || "").trim();
+    if (!note) {
+      const review = reviewByQuote.get(quoteKey);
+      if (review) note = review.thought.trim();
+    }
+    const noteKey = normalizeQuote(note);
+    if (noteKey && usedNotes.has(noteKey)) note = "";
+    if (note) usedNotes.add(noteKey);
+
+    excerpts.push({
+      id: sha1(bookId + "|" + quoteKey),
+      bookId,
+      book: title,
+      author,
+      chapter: block.chapter,
+      date: block.time.slice(0, 10),
+      text: block.quote,
+      note,
+      noteOnly: false,
+      quoteHash: sha1(block.quote),
+      quoteLength: [...block.quote].length,
+    });
+  }
+
+  // A thought can exist only in the review section (no matching highlight).
+  // Keep it instead of silently dropping it, with its own quote as context.
+  for (const review of reviews) {
+    const noteKey = normalizeQuote(review.thought);
+    if (!noteKey || usedNotes.has(noteKey)) continue;
+    usedNotes.add(noteKey);
+    excerpts.push({
+      id: sha1(bookId + "|note|" + noteKey),
+      bookId,
+      book: title,
+      author,
+      chapter: review.chapter,
+      date: review.time.slice(0, 10),
+      text: review.quote,
+      note: review.thought.trim(),
+      noteOnly: true,
+      quoteHash: sha1(review.quote),
+      quoteLength: [...review.quote].length,
+    });
+  }
+
+  const thoughts = [];
+  const seenNotes = new Set();
+  for (const excerpt of excerpts) {
+    if (!excerpt.note) continue;
+    const key = normalizeQuote(excerpt.note);
+    if (seenNotes.has(key)) continue;
+    seenNotes.add(key);
+    thoughts.push({
+      id: sha1(bookId + "|" + key),
+      bookId,
+      book: title,
+      author,
+      chapter: excerpt.chapter,
+      date: excerpt.date,
+      text: excerpt.note,
+      quote: excerpt.text,
+      quoteHash: excerpt.quoteHash,
+      quoteLength: excerpt.quoteLength,
+    });
+  }
+
+  return { highlights, reviews, excerpts, thoughts };
+}
+
 export function parseNote(text, fileName) {
   const fm = parseFrontmatter(text);
   const bookId = fm.bookId || sha1(fileName);
@@ -102,34 +196,14 @@ export function parseNote(text, fileName) {
     ...parseBlocks(sections["高亮划线"] || "", "highlight"),
     ...parseBlocks(sections["读书笔记"] || "", "review"),
   ];
-
-  const seen = new Set();
-  const thoughts = [];
-  for (const block of blocks) {
-    if (!block.thought) continue;
-    const key = block.thought.replace(/\s+/g, " ").trim();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    thoughts.push({
-      id: sha1(bookId + "|" + key),
-      bookId,
-      book: title,
-      author,
-      chapter: block.chapter,
-      date: block.time.slice(0, 10),
-      text: block.thought,
-      quote: block.quote,
-      quoteHash: sha1(block.quote),
-      quoteLength: [...block.quote].length,
-    });
-  }
+  const { highlights, excerpts, thoughts } = buildExcerpts(blocks, bookId, title, author);
 
   const chapters = new Map();
-  for (const block of blocks) {
-    const item = chapters.get(block.chapter) || { title: block.chapter, highlights: 0, thoughts: 0 };
+  for (const excerpt of excerpts) {
+    const item = chapters.get(excerpt.chapter) || { title: excerpt.chapter, highlights: 0, thoughts: 0 };
     item.highlights += 1;
-    if (block.thought) item.thoughts += 1;
-    chapters.set(block.chapter, item);
+    if (excerpt.note) item.thoughts += 1;
+    chapters.set(excerpt.chapter, item);
   }
 
   return {
@@ -142,11 +216,13 @@ export function parseNote(text, fileName) {
       readingMinutes: parseMinutes(fm.readingTime),
       lastReadDate: fm.lastReadDate || "",
       status: statusOf(fm),
-      highlights: blocks.filter((b) => b.kind === "highlight").length,
+      sourceHighlights: highlights.length,
+      highlights: excerpts.length,
       thoughts: thoughts.length,
       chapters: [...chapters.values()],
     },
     thoughts,
+    excerpts,
   };
 }
 
@@ -154,15 +230,32 @@ export function parseNotesDir(dir) {
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".md"));
   const books = [];
   const thoughts = [];
+  const excerpts = [];
   for (const file of files) {
     const text = fs.readFileSync(path.join(dir, file), "utf8");
     const parsed = parseNote(text, file);
     if (!parsed.book.title) continue;
     books.push(parsed.book);
     thoughts.push(...parsed.thoughts);
+    excerpts.push(...parsed.excerpts);
   }
   books.sort((a, b) => (b.lastReadDate || "").localeCompare(a.lastReadDate || ""));
-  return { books, thoughts };
+  const bookOrder = new Map(books.map((book, index) => [book.title, index]));
+  const chapterOrder = new Map();
+  for (const book of books) {
+    for (const [index, chapter] of (book.chapters || []).entries()) {
+      chapterOrder.set(book.title + "\u0000" + chapter.title, index);
+    }
+  }
+  excerpts.sort((a, b) => {
+    const byDate = (b.date || "").localeCompare(a.date || "");
+    if (byDate) return byDate;
+    const byBook = (bookOrder.get(a.book) || 0) - (bookOrder.get(b.book) || 0);
+    if (byBook) return byBook;
+    return (chapterOrder.get(a.book + "\u0000" + a.chapter) || 0) -
+      (chapterOrder.get(b.book + "\u0000" + b.chapter) || 0);
+  });
+  return { books, thoughts, excerpts };
 }
 
 function tableRows(text, headingPattern) {

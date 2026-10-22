@@ -17,20 +17,14 @@ if (!fs.existsSync(notesDir)) {
   process.exit(1);
 }
 
-const { books, thoughts } = parseNotesDir(notesDir);
+const { books, thoughts, excerpts } = parseNotesDir(notesDir);
 const statsText = fs.existsSync(statsPath) ? fs.readFileSync(statsPath, "utf8") : "";
 const stats = statsText ? parseStats(statsText) : { updated: "", lifetime: {}, years: [], monthly: [] };
 
-let curation = null;
-const curationPath = path.join(root, "config/curation.json");
-if (fs.existsSync(curationPath)) {
-  curation = new Set(JSON.parse(fs.readFileSync(curationPath, "utf8")).ids || []);
-}
-
-const published = curation ? thoughts.filter((t) => curation.has(t.id)) : thoughts;
-const sortedThoughts = [...published].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+const sortedThoughts = [...thoughts].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 const totalMinutes = books.reduce((sum, b) => sum + b.readingMinutes, 0);
 const totalHighlights = books.reduce((sum, b) => sum + b.highlights, 0);
+const sourceHighlights = books.reduce((sum, b) => sum + (b.sourceHighlights || b.highlights), 0);
 
 const payload = {
   meta: {
@@ -39,13 +33,15 @@ const payload = {
     statsAsOf: stats.updated,
     books: books.length,
     highlights: totalHighlights,
+    sourceHighlights,
+    excerpts: excerpts.length,
     thoughtsLocal: thoughts.length,
-    thoughtsPublished: published.length,
+    thoughtsPublished: sortedThoughts.length,
     readingMinutesLocal: totalMinutes,
-    curated: Boolean(curation),
   },
   books,
   thoughts: sortedThoughts,
+  excerpts,
   stats: {
     lifetime: stats.lifetime,
     years: stats.years,
@@ -58,6 +54,7 @@ for (const [file, value] of Object.entries({
   "meta.json": payload.meta,
   "books.json": payload.books,
   "thoughts.json": payload.thoughts,
+  "excerpts.json": payload.excerpts,
   "stats.json": payload.stats,
 })) {
   fs.writeFileSync(path.join(dataDir, file), JSON.stringify(value, null, 2) + "\n");
@@ -72,8 +69,8 @@ if (buildSite) {
 console.log(
   [
     "books " + books.length,
-    "highlights " + totalHighlights,
-    "thoughts " + thoughts.length + " → published " + published.length,
+    "excerpts " + excerpts.length + " / source " + sourceHighlights,
+    "thoughts " + thoughts.length + " → published " + sortedThoughts.length,
     "local reading " + formatMinutes(totalMinutes),
     "lifetime " + (stats.lifetime.minutes || 0) + " min",
   ].join(" | "),

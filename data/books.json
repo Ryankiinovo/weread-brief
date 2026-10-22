@@ -8,33 +8,34 @@
     "readingMinutes": 359,
     "lastReadDate": "2026-10-20",
     "status": "reading",
+    "sourceHighlights": 128,
     "highlights": 128,
     "thoughts": 55,
     "chapters": [
       {
         "title": "前言",
-        "highlights": 20,
-        "thoughts": 20
+        "highlights": 10,
+        "thoughts": 10
       },
       {
         "title": "第一部分 小米创业历程",
-        "highlights": 6,
-        "thoughts": 5
+        "highlights": 3,
+        "thoughts": 3
       },
       {
         "title": "第一章 奇迹时代",
-        "highlights": 44,
-        "thoughts": 44
+        "highlights": 22,
+        "thoughts": 22
       },
       {
         "title": "第二章 低谷",
-        "highlights": 30,
-        "thoughts": 30
+        "highlights": 15,
+        "thoughts": 15
       },
       {
         "title": "第三章 重回增长",
-        "highlights": 10,
-        "thoughts": 10
+        "highlights": 5,
+        "thoughts": 5
       },
       {
         "title": "第四章 新十年新征程",
@@ -67,13 +68,14 @@
     "readingMinutes": 379,
     "lastReadDate": "2026-10-19",
     "status": "finished",
+    "sourceHighlights": 152,
     "highlights": 152,
     "thoughts": 2,
     "chapters": [
       {
         "title": "导读",
-        "highlights": 6,
-        "thoughts": 2
+        "highlights": 5,
+        "thoughts": 1
       },
       {
         "title": "编辑前言",
@@ -147,8 +149,8 @@
       },
       {
         "title": "记忆的重要性",
-        "highlights": 8,
-        "thoughts": 2
+        "highlights": 7,
+        "thoughts": 1
       },
       {
         "title": "最初记忆",
@@ -376,6 +378,7 @@
     "readingMinutes": 227,
     "lastReadDate": "2026-07-08",
     "status": "reading",
+    "sourceHighlights": 9,
     "highlights": 9,
     "thoughts": 0,
     "chapters": [
@@ -405,6 +408,7 @@
     "readingMinutes": 92,
     "lastReadDate": "2025-12-26",
     "status": "paused",
+    "sourceHighlights": 7,
     "highlights": 7,
     "thoughts": 0,
     "chapters": [
@@ -429,6 +433,7 @@
     "readingMinutes": 109,
     "lastReadDate": "2025-06-09",
     "status": "paused",
+    "sourceHighlights": 59,
     "highlights": 59,
     "thoughts": 0,
     "chapters": [
@@ -493,7 +498,8 @@
     "readingMinutes": 640,
     "lastReadDate": "2025-02-14",
     "status": "paused",
-    "highlights": 231,
+    "sourceHighlights": 231,
+    "highlights": 229,
     "thoughts": 3,
     "chapters": [
       {
@@ -513,8 +519,8 @@
       },
       {
         "title": "第4章 卷积神经网络",
-        "highlights": 29,
-        "thoughts": 2
+        "highlights": 28,
+        "thoughts": 1
       },
       {
         "title": "第5章 循环神经网络",
@@ -523,8 +529,8 @@
       },
       {
         "title": "第6章 自注意力机制",
-        "highlights": 16,
-        "thoughts": 2
+        "highlights": 15,
+        "thoughts": 1
       },
       {
         "title": "第7章 Transformer",
@@ -533,8 +539,8 @@
       },
       {
         "title": "第8章 生成模型",
-        "highlights": 67,
-        "thoughts": 2
+        "highlights": 64,
+        "thoughts": 1
       }
     ]
   },
@@ -547,12 +553,13 @@
     "readingMinutes": 183,
     "lastReadDate": "2025-01-25",
     "status": "paused",
-    "highlights": 53,
+    "sourceHighlights": 53,
+    "highlights": 52,
     "thoughts": 0,
     "chapters": [
       {
         "title": "第一节 几种重要的媒介控制理论",
-        "highlights": 49,
+        "highlights": 48,
         "thoughts": 0
       },
       {
@@ -571,7 +578,8 @@
     "readingMinutes": 92,
     "lastReadDate": "2024-12-01",
     "status": "paused",
-    "highlights": 81,
+    "sourceHighlights": 81,
+    "highlights": 80,
     "thoughts": 0,
     "chapters": [
       {
@@ -586,7 +594,7 @@
       },
       {
         "title": "导 读",
-        "highlights": 71,
+        "highlights": 70,
         "thoughts": 0
       },
       {
@@ -610,6 +618,7 @@
     "readingMinutes": 7,
     "lastReadDate": "2024-12-01",
     "status": "paused",
+    "sourceHighlights": 4,
     "highlights": 4,
     "thoughts": 0,
     "chapters": [

@@ -43,15 +43,17 @@ const NOTE = [
 ].join(NL);
 
 test("parseNote 读取 frontmatter、章节与统计", () => {
-  const { book, thoughts } = parseNote(NOTE, "测试.md");
+  const { book, thoughts, excerpts } = parseNote(NOTE, "测试.md");
   assert.equal(book.id, "test-book");
   assert.equal(book.title, "测试书");
   assert.equal(book.author, "测试作者");
   assert.equal(book.progress, "42%");
   assert.equal(book.readingMinutes, 65);
   assert.equal(book.status, "reading");
-  assert.equal(book.highlights, 4);
+  assert.equal(book.highlights, 5);
+  assert.equal(excerpts.length, 5);
   assert.equal(thoughts.length, 4);
+  assert.equal(excerpts.filter((item) => item.noteOnly).length, 1);
   const chapters = book.chapters.map((c) => c.title);
   assert.ok(chapters.includes("第一章"));
   assert.ok(chapters.includes("第一节"));
