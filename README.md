@@ -16,7 +16,7 @@
 
 - **总览**：官方累计阅读时长、读过的书、读完的书、笔记数；2021—2026 历年柱状图与当年逐月分布。
 - **书架**：同步到本地的书，含作者、进度、阅读时长、划线与想法数量、阅读状态。
-- **批注**：从本地想法中人工精选后公开，可按书筛选；只放原创判断，不附原文。
+- **批注**：60 条本地原创想法全部公开，可按书筛选；只放原创判断，不附原文。
 - **方法**：同步 → 解析 → 生成 → 校验的流水线说明，以及隐私与口径决策。
 
 页面是纯静态的：`site/index.html` + 手写的 `site/assets/style.css` 与 `site/assets/app.js`，没有构建期前端依赖，也没有外部字体或统计脚本。
@@ -28,8 +28,8 @@
 要求：Node.js 18+、一个 Obsidian 笔记目录，以及已经同步过微信读书笔记。
 
 ```bash
-git clone https://github.com/Ryankiinovo/weread-reading-archive.git
-cd weread-reading-archive
+git clone https://github.com/Ryankiinovo/weread-brief.git
+cd weread-brief
 
 # 指向你的微信读书笔记目录（默认路径见 scripts/build.mjs）
 WEREAD_DIR="$HOME/Documents/Obsidian/Ryankiinovo/微信读书/10 Sources/WeRead" npm run build
@@ -117,14 +117,14 @@ WEREAD_DIR=example/notes node scripts/build.mjs --no-site
 
 ## 公开哪些内容
 
-默认只公开两类数据：
+公开两类数据：
 
-1. **原创想法**：你在微信读书里写下的批注，经过 `config/curation.json` 人工筛选。仓库里是 60 条中的 24 条。
+1. **原创想法**：你在微信读书里写下的 60 条批注，全部公开。
 2. **元数据与统计**：书名、作者、进度、时长、划线数、想法数、阅读日期、章节名。
 
 不公开：书籍原文、私人笔记全文、登录 Cookie、带个人信息的路径。
 
-`config/curation.json` 用想法 id 白名单控制公开范围；删除该文件则公开全部本地想法，不建议直接这样做。
+构建脚本支持用 `config/curation.json` 的 id 白名单收窄范围；本仓库没有启用，因此新增想法会自动进入页面。
 
 ### 隐私检查
 
@@ -152,7 +152,6 @@ npm run check
 │   ├── render.mjs       # 生成静态 HTML
 │   └── check.mjs        # 隐私与数据结构检查
 ├── tests/parse.test.mjs # 解析边界与统计口径测试
-├── config/curation.json # 公开想法 id 白名单
 ├── data/                # 构建产物（JSON）
 ├── site/                # 静态页面（可直接部署）
 ├── example/notes/       # 脱敏示例笔记
@@ -171,6 +170,8 @@ npm run check   # 隐私与产物检查
 
 ## 部署
 
+线上地址：<https://ryankiinovo.github.io/weread-brief/>
+
 页面已经在本地构建好并提交到 `site/`，GitHub Actions 只负责部署，不在 CI 里重新解析笔记（CI 拿不到你的 Obsidian 库）。
 
 1. 推送到 `main`。
@@ -183,7 +184,7 @@ npm run check   # 隐私与产物检查
 
 - 解析规则绑定 obsidian-weread-plugin 的输出格式；插件大改版时可能需要同步调整。
 - 「在读 / 搁置」用 180 天启发式判断，不是微信读书的官方状态。
-- 公开想法依赖人工白名单，新增想法不会自动出现在页面上。
+- 公开范围默认全量；如需收窄，可添加 `config/curation.json` 白名单，否则新增想法会直接公开。
 - 字体依赖系统：macOS 使用宋体/PingFang，其他系统会回退到 Noto 或 Georgia，排版略有差异。
 - 站点是静态产物，没有搜索与分页；想法数量增多时需要改成分页或多页。
 
@@ -193,7 +194,7 @@ A small, reproducible pipeline that turns WeRead highlights, thoughts and readin
 
 - Zero dependencies; Node.js 18+.
 - Parses Markdown, deduplicates thoughts, never exports book text (only a quote hash and length).
-- Publishes only hand-curated thoughts; a privacy check guards the output.
+- Publishes every original thought by default; an optional id whitelist can narrow the set, and a privacy check guards the output.
 - Visual design is editorial: warm paper, serif display type, restrained accent, responsive layout.
 
 ```bash

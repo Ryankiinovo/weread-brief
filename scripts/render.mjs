@@ -1,4 +1,4 @@
-const REPO = "https://github.com/Ryankiinovo/weread-reading-archive";
+const REPO = "https://github.com/Ryankiinovo/weread-brief";
 const NL = String.fromCharCode(10);
 
 const STATUS_LABEL = { reading: "在读", finished: "已读完", paused: "搁置" };
@@ -134,6 +134,9 @@ export function renderSite(payload) {
   const finishedCount = books.filter(function (b) { return b.status === "finished"; }).length;
   const readingCount = books.filter(function (b) { return b.status === "reading"; }).length;
 
+  const notesLede = thoughts.length === localThoughts
+    ? localThoughts + ' 条本地想法全部公开。'
+    : '从 ' + localThoughts + ' 条本地想法里挑出 ' + thoughts.length + ' 条公开。';
   const lines = [
     '<!doctype html>',
     '<html lang="zh-CN">',
@@ -141,11 +144,11 @@ export function renderSite(payload) {
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     '<title>阅读档案 · Ryankiin</title>',
-    '<meta name="description" content="把微信读书里的划线、想法与阅读统计整理成一份可检索的个人阅读档案：9 本书、724 条划线、60 条想法。">',
+    '<meta name="description" content="把微信读书里的划线、想法与阅读统计整理成一份可检索的个人阅读档案：' + synced + ' 本书、' + highlights + ' 条划线、' + localThoughts + ' 条想法。">',
     '<meta name="theme-color" content="#f6f1e7">',
     '<meta property="og:type" content="website">',
     '<meta property="og:title" content="阅读档案 · Ryankiin">',
-    '<meta property="og:description" content="9 本书、724 条划线、60 条想法：一份可复现的个人阅读档案。">',
+    '<meta property="og:description" content="' + synced + ' 本书、' + highlights + ' 条划线、' + localThoughts + ' 条想法：一份可复现的个人阅读档案。">',
     '<link rel="stylesheet" href="./assets/style.css">',
     '</head>',
     '<body>',
@@ -224,7 +227,7 @@ export function renderSite(payload) {
     '      <div class="section-head">',
     '        <p class="index">03</p>',
     '        <h2>我写下的批注</h2>',
-    '        <p class="section-lede">从 ' + localThoughts + ' 条本地想法里挑出 ' + thoughts.length + ' 条公开。只保留自己的判断，不转载书籍原文。</p>',
+        '<p class="section-lede">' + notesLede + '只保留自己的判断，不转载书籍原文。</p>',
     '      </div>',
     '      <div class="filters" role="group" aria-label="按书筛选批注">',
     '        ' + filterChips(thoughts),
@@ -251,7 +254,7 @@ export function renderSite(payload) {
     '        <div class="method-side">',
     '          <div class="terminal" aria-label="构建命令">',
     '            <div class="terminal-bar"><span></span><span></span><span></span><em>build</em></div>',
-    '            <pre><code>WEREAD_DIR=/path/to/WeRead npm run build' + NL + 'node --test tests/' + NL + 'npm run check</code></pre>',
+    '            <pre><code>WEREAD_DIR=/path/to/WeRead npm run build' + NL + 'node --test' + NL + 'npm run check</code></pre>',
     '          </div>',
     '          <ul class="facts">',
     '            <li><b>0</b><span>运行时依赖</span></li>',
