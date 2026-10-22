@@ -309,7 +309,7 @@ export function renderSite(payload) {
     '          <li><span class="step-no">01</span><div><h3>同步</h3><p>微信读书 → Obsidian。用 obsidian-weread-plugin 把划线、想法、进度和时长同步成本地 Markdown。</p></div></li>',
     '          <li><span class="step-no">02</span><div><h3>解析</h3><p>Node 脚本读取 frontmatter 与正文区块，按书聚合章节，去重、清洗时间，输出 JSON。</p></div></li>',
     '          <li><span class="step-no">03</span><div><h3>生成</h3><p>由 JSON 渲染静态页面，不依赖框架和第三方请求；样式与脚本都是手写的。</p></div></li>',
-    '          <li><span class="step-no">04</span><div><h3>校验</h3><p>单元测试覆盖解析边界，隐私检查确认 Cookie、联系方式与本机路径不进入产物；原文只随对应批注出现。</p></div></li>',
+    '          <li><span class="step-no">04</span><div><h3>校验</h3><p>单元测试覆盖解析边界，隐私检查确认 Cookie、联系方式与本机路径不进入产物；原文与批注分开标注，版权归原作者。</p></div></li>',
     '        </ol>',
     '        <div class="method-side">',
     '          <div class="terminal" aria-label="构建命令">',
