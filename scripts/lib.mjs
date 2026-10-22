@@ -118,6 +118,7 @@ export function parseNote(text, fileName) {
       chapter: block.chapter,
       date: block.time.slice(0, 10),
       text: block.thought,
+      quote: block.quote,
       quoteHash: sha1(block.quote),
       quoteLength: [...block.quote].length,
     });

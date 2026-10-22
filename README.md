@@ -10,13 +10,13 @@
 
 微信读书记录「读了多少」，但划线、想法和阅读时长散落在 App 与笔记里，很难回看。市面上的年度报告通常只给截图，不能检索，也不能迁移。
 
-这个项目只做一件事：把「读过的痕迹」变成结构化数据，再用编辑式排版呈现出来。同时守住两条边界——不转载书籍原文，不上传任何登录凭据。
+这个项目只做一件事：把「读过的痕迹」变成结构化数据，再用编辑式排版呈现出来。同时守住两条边界——不提供整书内容、不上传任何登录凭据；书籍原文只作为批注的短对照出现。
 
 ## 站点包含什么
 
 - **总览**：官方累计阅读时长、读过的书、读完的书、笔记数；2021—2026 历年柱状图与当年逐月分布。
 - **书架**：同步到本地的书，含作者、进度、阅读时长、划线与想法数量、阅读状态。
-- **批注**：60 条本地原创想法全部公开，可按书筛选；只放原创判断，不附原文。
+- **批注**：60 条本地原创想法全部公开，可按书筛选；每条附上对应的划线原文片段，原文只作对照。
 - **方法**：同步 → 解析 → 生成 → 校验的流水线说明，以及隐私与口径决策。
 
 页面是纯静态的：`site/index.html` + 手写的 `site/assets/style.css` 与 `site/assets/app.js`，没有构建期前端依赖，也没有外部字体或统计脚本。
@@ -44,7 +44,7 @@ python3 -m http.server 8000 --directory site
 
 - `data/meta.json`：生成时间、来源、各项计数。
 - `data/books.json`：书目与章节统计。
-- `data/thoughts.json`：公开想法（不含原文）。
+- `data/thoughts.json`：公开想法与对应的划线原文片段。
 - `data/stats.json`：官方 lifetime、历年与逐月。
 - `site/index.html`：静态页面。
 
@@ -74,7 +74,7 @@ readingStatus: "2"
 # 高亮划线
 
 ## 第一章
-> 📌 书籍原文（不会进入公开数据） ^abc123
+> 📌 书籍原文（会随对应批注展示片段） ^abc123
     💭 我的想法
     ⏱ 2026-10-01 09:00:00
 
@@ -92,7 +92,7 @@ readingStatus: "2"
 - 读取 frontmatter 中的书目元数据与阅读状态。
 - 以 `> 📌` 开头识别一个划线块，向下读取 `💭`（想法）与 `⏱`（时间），遇到空行、标题或下一个划线块即结束。
 - `### 划线评论` 不是章节，会被跳过，章节沿用上级标题。
-- 想法按文本去重，生成稳定 id；引用只保留 SHA-1 前 12 位与字符数，用于校验而不泄漏内容。
+- 想法按文本去重，生成稳定 id；引用原文随批注保留，同时记录 SHA-1 前 12 位与字符数用于校验。
 - 阅读状态：`readingStatus == 4` 或进度 100% 视为读完；180 天内有阅读记录视为在读；其余为搁置。
 
 ### 2. 阅读统计
@@ -117,12 +117,13 @@ WEREAD_DIR=example/notes node scripts/build.mjs --no-site
 
 ## 公开哪些内容
 
-公开两类数据：
+公开三类数据：
 
 1. **原创想法**：你在微信读书里写下的 60 条批注，全部公开。
-2. **元数据与统计**：书名、作者、进度、时长、划线数、想法数、阅读日期、章节名。
+2. **对应原文**：每条批注对应的划线片段，只作上下文对照，不提供整书内容。
+3. **元数据与统计**：书名、作者、进度、时长、划线数、想法数、阅读日期、章节名。
 
-不公开：书籍原文、私人笔记全文、登录 Cookie、带个人信息的路径。
+不公开：整书内容、私人笔记全文、登录 Cookie、带个人信息的路径。
 
 构建脚本支持用 `config/curation.json` 的 id 白名单收窄范围；本仓库没有启用，因此新增想法会自动进入页面。
 
@@ -132,7 +133,7 @@ WEREAD_DIR=example/notes node scripts/build.mjs --no-site
 npm run check
 ```
 
-检查项包括：手机号、邮箱、身份证号、微信读书 Cookie 关键词、本机绝对路径、页面中的划线标记、第三方脚本引用，以及想法对象是否混入 `quote` 字段。
+检查项包括：手机号、邮箱、身份证号、微信读书 Cookie 关键词、本机绝对路径、页面中的划线标记、第三方脚本引用，以及每条想法是否带非空原文、`quoteLength` 是否与实际一致。
 
 解析器本身不读取 Obsidian 插件的 `data.json`；那份文件里存有微信读书登录凭据，任何时候都不应提交或粘贴到公开场合。
 
@@ -166,7 +167,7 @@ npm test        # node --test
 npm run check   # 隐私与产物检查
 ```
 
-测试覆盖：frontmatter 与章节归属、标题紧贴上一块、连续划线块、想法去重、引用不进入公开数据、阅读状态判定、统计解析、分钟格式化。
+测试覆盖：frontmatter 与章节归属、标题紧贴上一块、连续划线块、想法去重、原文随批注保留、阅读状态判定、统计解析、分钟格式化。
 
 ## 部署
 
@@ -193,7 +194,7 @@ npm run check   # 隐私与产物检查
 A small, reproducible pipeline that turns WeRead highlights, thoughts and reading stats synced into Obsidian into a static reading archive.
 
 - Zero dependencies; Node.js 18+.
-- Parses Markdown, deduplicates thoughts, never exports book text (only a quote hash and length).
+- Parses Markdown, deduplicates thoughts, and keeps the highlighted excerpt beside each thought as context.
 - Publishes every original thought by default; an optional id whitelist can narrow the set, and a privacy check guards the output.
 - Visual design is editorial: warm paper, serif display type, restrained accent, responsive layout.
 
@@ -206,7 +207,7 @@ npm test && npm run check
 
 - Code: MIT (see `LICENSE`).
 - Original written content and curated reading data: CC BY-NC-ND 4.0.
-- Book excerpts remain the property of their authors and publishers; this repository does not redistribute them.
+- Book excerpts remain the property of their authors and publishers; they are included only as short context for the accompanying notes.
 
 Not affiliated with WeRead or Tencent.
 

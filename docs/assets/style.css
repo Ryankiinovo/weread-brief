@@ -598,6 +598,28 @@ section[id] { scroll-margin-top: 84px; }
 }
 .note[hidden] { display: none; }
 
+.note-label {
+  display: block;
+  margin-bottom: 7px;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.note-quote {
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 1px solid var(--accent);
+  font-family: var(--serif);
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--muted);
+}
+
 .note-text {
   margin: 0;
   font-family: var(--serif);
@@ -605,6 +627,7 @@ section[id] { scroll-margin-top: 84px; }
   line-height: 1.9;
   color: var(--ink);
 }
+.note-text .note-label { color: var(--muted); }
 
 .note-foot {
   display: flex;
@@ -885,7 +908,8 @@ section[id] { scroll-margin-top: 84px; }
   .foot-grid { flex-direction: column; }
   .facts { gap: 10px; }
   .facts b { font-size: 22px; }
-  .note { padding: 22px 20px 16px; }
+  .note { padding: 22px 20px 16px; gap: 20px; }
+  .note-quote { font-size: 13.5px; }
   .note-text { font-size: 16px; }
   h1 { font-size: 34px; }
 }

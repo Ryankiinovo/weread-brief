@@ -96,8 +96,12 @@ function bookCards(books) {
 
 function noteCards(thoughts) {
   return thoughts.map(function (thought) {
+    const quote = thought.quote
+      ? '<blockquote class="note-quote"><span class="note-label">原文</span>' + esc(thought.quote) + '</blockquote>'
+      : '';
     return '<article class="note" data-book="' + esc(thought.book) + '">' +
-      '<p class="note-text">' + esc(thought.text) + '</p>' +
+      quote +
+      '<p class="note-text"><span class="note-label">批注</span>' + esc(thought.text) + '</p>' +
       '<footer class="note-foot"><span class="note-book">' + esc(thought.book) + '</span>' +
       '<span class="note-chapter">' + esc(thought.chapter) + '</span>' +
       '<time datetime="' + esc(thought.date) + '">' + dotDate(thought.date) + '</time></footer></article>';
@@ -168,7 +172,7 @@ export function renderSite(payload) {
     '      <div class="hero-main">',
     '        <p class="eyebrow">个人阅读档案 · Ryankiin · 2020—2026</p>',
     '        <h1>把读过的书，<br><em>整理成可检索的档案。</em></h1>',
-    '        <p class="lede">把微信读书里的划线、批注和阅读时长导出、解析，做成一份能反复回看的结构化记录。原文留在书里，这里只公开自己的判断。</p>',
+    '        <p class="lede">把微信读书里的划线、批注和阅读时长导出、解析，做成一份能反复回看的结构化记录。原文与自己的想法并置，方便对照。</p>',
     '        <p class="hero-note">已同步 ' + synced + ' 本书 · ' + highlights + ' 条划线 · ' + localThoughts + ' 条想法</p>',
     '      </div>',
     '      <aside class="hero-aside" aria-label="档案说明">',
@@ -227,7 +231,7 @@ export function renderSite(payload) {
     '      <div class="section-head">',
     '        <p class="index">03</p>',
     '        <h2>我写下的批注</h2>',
-        '<p class="section-lede">' + notesLede + '只保留自己的判断，不转载书籍原文。</p>',
+        '<p class="section-lede">' + notesLede + '每条都附上对应的划线原文，原文只作对照，版权归原作者。</p>',
     '      </div>',
     '      <div class="filters" role="group" aria-label="按书筛选批注">',
     '        ' + filterChips(thoughts),
@@ -249,7 +253,7 @@ export function renderSite(payload) {
     '          <li><span class="step-no">01</span><div><h3>同步</h3><p>微信读书 → Obsidian。用 obsidian-weread-plugin 把划线、想法、进度和时长同步成本地 Markdown。</p></div></li>',
     '          <li><span class="step-no">02</span><div><h3>解析</h3><p>Node 脚本读取 frontmatter 与正文区块，按书聚合章节，去重、清洗时间，输出 JSON。</p></div></li>',
     '          <li><span class="step-no">03</span><div><h3>生成</h3><p>由 JSON 渲染静态页面，不依赖框架和第三方请求；样式与脚本都是手写的。</p></div></li>',
-    '          <li><span class="step-no">04</span><div><h3>校验</h3><p>单元测试覆盖解析边界，隐私检查确认没有原文、Cookie、联系方式进入产物。</p></div></li>',
+    '          <li><span class="step-no">04</span><div><h3>校验</h3><p>单元测试覆盖解析边界，隐私检查确认 Cookie、联系方式与本机路径不进入产物；原文只随对应批注出现。</p></div></li>',
     '        </ol>',
     '        <div class="method-side">',
     '          <div class="terminal" aria-label="构建命令">',
@@ -259,12 +263,12 @@ export function renderSite(payload) {
     '          <ul class="facts">',
     '            <li><b>0</b><span>运行时依赖</span></li>',
     '            <li><b>2</b><span>个构建脚本</span></li>',
-    '            <li><b>0</b><span>条书籍原文</span></li>',
+    '            <li><b>' + thoughts.length + '</b><span>段原文对照</span></li>',
     '          </ul>',
     '        </div>',
     '      </div>',
     '      <div class="principles">',
-    '        <div><h3>只公开自己的话</h3><p>划线是书籍内容，只用于统计；公开区域只放原创批注与元数据。</p></div>',
+    '        <div><h3>原文只作对照</h3><p>划线版权归原作者；页面只展示与批注对应的短片段，不提供整书内容，也不做原文检索。</p></div>',
     '        <div><h3>口径写清楚</h3><p>官方统计与本地同步覆盖分开标注，不把 501 条官方笔记等同于这里的 ' + localThoughts + ' 条想法。</p></div>',
     '        <div><h3>可复核</h3><p>每个数字都能由仓库里的脚本和原始 Markdown 重新算出来，页面只是产物。</p></div>',
     '      </div>',
@@ -276,7 +280,7 @@ export function renderSite(payload) {
     '    <div><p class="foot-title">阅读档案</p><p class="foot-text">数据：微信读书官方统计（截至 ' + esc(meta.statsAsOf || "—") + '）+ 本地同步笔记。页面生成于 ' + generated + '。</p></div>',
     '    <div class="foot-links"><a href="' + REPO + '">GitHub 仓库</a><a href="' + REPO + '/blob/main/docs/case-study.md">制作说明</a><a href="#top">回到顶部</a></div>',
     '  </div>',
-    '  <div class="wrap foot-fine"><p>只收录原创批注，不转载书籍原文。本站无追踪、无第三方脚本。</p></div>',
+    '  <div class="wrap foot-fine"><p>原创批注 + 对应划线片段；书籍原文版权归原作者。本站无追踪、无第三方脚本。</p></div>',
     '</footer>',
     '<script src="./assets/app.js"></script>',
     '</body>',

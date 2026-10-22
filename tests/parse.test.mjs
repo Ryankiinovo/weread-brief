@@ -92,16 +92,18 @@ test("连续划线块不合并", () => {
   assert.equal(blocks[1].thought, "想法二");
 });
 
-test("相同想法按文本去重，引用不进入公开数据", () => {
+test("相同想法按文本去重，引用随批注保留", () => {
   const { thoughts } = parseNote(NOTE, "测试.md");
   const ids = new Set(thoughts.map((t) => t.id));
   assert.equal(ids.size, thoughts.length);
   assert.equal(thoughts.filter((t) => t.text === "想法一").length, 1);
   for (const thought of thoughts) {
-    assert.ok(!("quote" in thought));
+    assert.ok(thought.quote.length > 0);
+    assert.ok(!thought.quote.startsWith("📌"));
     assert.equal(thought.quoteHash.length, 12);
-    assert.ok(thought.quoteLength > 0);
+    assert.equal(thought.quoteLength, [...thought.quote].length);
   }
+  assert.equal(thoughts.find((t) => t.text === "想法一").quote, "引用第一段");
 });
 
 test("阅读状态判定", () => {

@@ -33,9 +33,11 @@ for (const target of targets) {
 }
 
 for (const thought of thoughts) {
-  if (Object.prototype.hasOwnProperty.call(thought, "quote")) issues.push("想法 " + thought.id + " 含书籍原文");
+  if (!thought.quote || !thought.quote.trim()) issues.push("想法 " + thought.id + " 缺少原文");
+  if (thought.quote && thought.quote.length > 500) issues.push("想法 " + thought.id + " 原文过长");
   if (!thought.text || !thought.text.trim()) issues.push("想法 " + thought.id + " 文本为空");
   if (!/^[0-9a-f]{12}$/.test(thought.quoteHash || "")) issues.push("想法 " + thought.id + " quoteHash 非法");
+  if (thought.quote && [...thought.quote].length !== thought.quoteLength) issues.push("想法 " + thought.id + " quoteLength 不一致");
 }
 
 if (!thoughts.length) issues.push("公开想法为空");
