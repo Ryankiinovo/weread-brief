@@ -150,13 +150,13 @@ npm run check
 │   ├── lib.mjs          # 解析、清洗、统计（无依赖）
 │   ├── build.mjs        # 读取笔记 → 输出 data/ 与 site/
 │   ├── render.mjs       # 生成静态 HTML
-│   └── check.mjs        # 隐私与数据结构检查
+│   ├── check.mjs        # 隐私与数据结构检查
+│   └── deploy-pages.sh  # 构建并发布到 gh-pages 分支
 ├── tests/parse.test.mjs # 解析边界与统计口径测试
 ├── data/                # 构建产物（JSON）
 ├── site/                # 静态页面（可直接部署）
 ├── example/notes/       # 脱敏示例笔记
-├── docs/                # 预览图与制作说明
-└── .github/workflows/   # GitHub Pages 部署
+└── docs/                # 预览图与制作说明
 ```
 
 ## 测试
@@ -172,13 +172,13 @@ npm run check   # 隐私与产物检查
 
 线上地址：<https://ryankiinovo.github.io/weread-brief/>
 
-页面已经在本地构建好并提交到 `site/`，GitHub Actions 只负责部署，不在 CI 里重新解析笔记（CI 拿不到你的 Obsidian 库）。
+页面已经在本地构建好并提交到 `site/`。部署走 `gh-pages` 分支：脚本在临时 worktree 里把 `site/` 提交到该分支，GitHub Pages 直接从分支提供文件，不依赖 CI runner。
 
-1. 推送到 `main`。
-2. 仓库 Settings → Pages → Source 选择 **GitHub Actions**。
-3. `.github/workflows/pages.yml` 会在每次推送后发布 `site/`。
+1. 运行 `./scripts/deploy-pages.sh`（会先构建、做隐私检查，再推送 `gh-pages`）。
+2. 仓库 Settings → Pages → Source 选择 **Deploy from a branch**，分支 `gh-pages`、目录 `/`。
+3. 等 Pages 构建完成，打开线上地址。
 
-如果修改了源码或笔记，先在本地重新构建、检查、提交，再推送。
+如果修改了源码或笔记，重新运行一遍脚本即可；构建与检查都在里面。
 
 ## 已知限制
 
