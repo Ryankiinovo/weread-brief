@@ -1,0 +1,98 @@
+{
+  "lifetime": {
+    "since": "2020-08-06",
+    "minutes": 2803,
+    "days": 131,
+    "booksRead": 32,
+    "finished": 16,
+    "notes": 501
+  },
+  "years": [
+    {
+      "year": 2018,
+      "minutes": 0
+    },
+    {
+      "year": 2019,
+      "minutes": 0
+    },
+    {
+      "year": 2020,
+      "minutes": 0
+    },
+    {
+      "year": 2021,
+      "minutes": 69
+    },
+    {
+      "year": 2022,
+      "minutes": 853
+    },
+    {
+      "year": 2023,
+      "minutes": 189
+    },
+    {
+      "year": 2024,
+      "minutes": 221
+    },
+    {
+      "year": 2025,
+      "minutes": 1206
+    },
+    {
+      "year": 2026,
+      "minutes": 262
+    }
+  ],
+  "monthly": [
+    {
+      "month": 1,
+      "minutes": 0
+    },
+    {
+      "month": 2,
+      "minutes": 151
+    },
+    {
+      "month": 3,
+      "minutes": 43
+    },
+    {
+      "month": 4,
+      "minutes": 44
+    },
+    {
+      "month": 5,
+      "minutes": 0
+    },
+    {
+      "month": 6,
+      "minutes": 1
+    },
+    {
+      "month": 7,
+      "minutes": 16
+    },
+    {
+      "month": 8,
+      "minutes": 0
+    },
+    {
+      "month": 9,
+      "minutes": 3
+    },
+    {
+      "month": 10,
+      "minutes": 0
+    },
+    {
+      "month": 11,
+      "minutes": 0
+    },
+    {
+      "month": 12,
+      "minutes": 0
+    }
+  ]
+}

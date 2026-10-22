@@ -1,0 +1,15 @@
+{
+  "name": "weread-reading-archive",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Turn WeRead highlights, thoughts and reading stats into a reproducible personal reading archive.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
