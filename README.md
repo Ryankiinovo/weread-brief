@@ -156,7 +156,7 @@ npm run check
 ├── data/                # 构建产物（JSON）
 ├── site/                # 静态页面（可直接部署）
 ├── example/notes/       # 脱敏示例笔记
-└── docs/                # 预览图与制作说明
+└── docs/                # 预览图、制作说明与 Pages 发布镜像
 ```
 
 ## 测试
@@ -172,10 +172,10 @@ npm run check   # 隐私与产物检查
 
 线上地址：<https://ryankiinovo.github.io/weread-brief/>
 
-页面已经在本地构建好并提交到 `site/`。部署走 `gh-pages` 分支：脚本在临时目录里把 `site/` 提交到该分支，GitHub Pages 直接从分支提供文件，不依赖 CI runner。
+页面构建产物在 `site/`，发布镜像在 `docs/`。`./scripts/deploy-pages.sh` 会构建、做隐私检查、把 `site/` 同步到 `docs/` 并推送 `main`，不依赖 CI runner。
 
-1. 运行 `./scripts/deploy-pages.sh`（会先构建、做隐私检查，再推送 `gh-pages`）。
-2. 仓库 Settings → Pages → Source 选择 **Deploy from a branch**，分支 `gh-pages`、目录 `/`。
+1. 运行 `./scripts/deploy-pages.sh`。
+2. 仓库 Settings → Pages → Source 选择 **Deploy from a branch**，分支 `main`、目录 `/docs`。
 3. 等 Pages 构建完成，打开线上地址。
 
 如果修改了源码或笔记，重新运行一遍脚本即可；构建与检查都在里面。
