@@ -220,3 +220,18 @@ Not affiliated with WeRead or Tencent.
 
 - obsidian-weread-plugin：把微信读书同步成 Markdown。
 - 字体与排版灵感来自中文书籍与独立杂志的编辑设计。
+
+## 迁移与新机使用
+
+纯静态站，构建只依赖 Node（>= 18），没有前端框架、没有外部 CDN、没有构建期第三方依赖。
+
+@@F@@bash
+node --version      # 需要 >= 18
+npm run build       # 生成 site/
+npm run check       # 校验数据与页面一致性
+npm test            # 单元测试
+@@F@@
+
+`site/index.html` 可以直接双击打开；重新生成则需要数据源 —— Obsidian 里的微信读书笔记（`微信读书/10 Sources/WeRead`），该目录不在本仓库内，换机器时要一并同步。
+
+已发布的静态页在 GitHub Pages，不需要自建服务器。
